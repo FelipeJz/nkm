@@ -1,6 +1,8 @@
 # NKM
 
-Neovim Knowledge Management that uses .md files to display information inline like tasks, tables and generate templates using custom .lua scripts
+Neovim Knowledge Management that uses .md files to display information inline like tasks, tables and generate templates using custom .lua scripts.
+
+![screenshot](https://github.com/FelipeJz/nkm/blob/master/examples/screenshot.jpg)
 
 ## Installation
 
