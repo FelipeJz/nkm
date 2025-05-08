@@ -4,6 +4,9 @@
 
 ## Active tasks
 {{["scripts/tasks.lua", {"path":"quests","status": "/", "label": "🟦"} ]}}
+---
+## Urgent tasks (example using tags)
+{{["scripts/tasks.lua", {"path":"quests","tags": ["urgent"], "label": "🟦"} ]}}
 
 ## Today habits
 --------------

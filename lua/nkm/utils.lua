@@ -105,24 +105,15 @@ function M.get_files_in_directory(directory)
   return files
 end
 
--- Search all tasks in a file
--- @param string file File path
--- @param string status The status of the task
--- @param string label Label to prepend
--- @param "desc" | "data" return_type
-function M.search_tasks_in_file(file, status, tag, label, return_type)
+function M.search_tasks_in_file(file, status, tags, label, return_type)
   return_type = return_type or "desc"
 
   local tasks = {}
 
-  if status == "_" then
-    status = " "
-  end
+  if status == "_" then status = " " end
 
-  -- Read the file contents
   local file_content = {}
   local file_handle = io.open(M.expand_home(file), "r")
-
   if file_handle then
     for line in file_handle:lines() do
       table.insert(file_content, line)
@@ -130,18 +121,31 @@ function M.search_tasks_in_file(file, status, tag, label, return_type)
     file_handle:close()
   end
 
-  -- Parse each line for tasks
   for i, line in ipairs(file_content) do
-    -- Match task status and description (after "- [ ] ")
     local task_status, task_desc = line:match("^%s*%- %[(.)%] (.+)$")
 
-    if task_status then
-      -- Check if the task status matches the provided status
-      if task_status == status or not status then
+    if task_status and (task_status == status or not status) then
+      local found = not tags or #tags == 0
+
+      if tags and #tags > 0 then
+        for _, t in ipairs(tags) do
+          if task_desc:find("#" .. t) then
+            found = true
+            break
+          end
+        end
+      end
+
+      if found then
         if return_type == "desc" then
           table.insert(tasks, (label or "") .. " " .. task_desc)
         else
-          table.insert(tasks, { row = i, desc = task_desc, status = task_status })
+          table.insert(tasks, {
+            row = i,
+            desc = task_desc,
+            status = task_status,
+            tags = tags,
+          })
         end
       end
     end

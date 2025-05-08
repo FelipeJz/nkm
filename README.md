@@ -79,4 +79,3 @@ Using Lazy
 - [ ] Fix diseapering lines
 - [ ] Toggle script view
 - [ ] Create frontmatter search util
-- [ ] Task search by tag

@@ -17,7 +17,7 @@ return function(_, options)
         goto continue
       end
     end
-    local tasks = utils.search_tasks_in_file(file, options.status, options.tag, options.label)
+    local tasks = utils.search_tasks_in_file(file, options.status, options.tags, options.label)
     for _, task in ipairs(tasks) do
       table.insert(all_tasks, task)
     end
