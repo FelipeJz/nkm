@@ -167,7 +167,6 @@ function M.update_virtual_text()
 
         -- Gets script text
         if match_type == "script" then
-
           local _, decoded = pcall(vim.fn.json_decode, json_body)
           local result = M.run_script(decoded[1], decoded[2] or {})
 
@@ -204,6 +203,8 @@ function M.update_virtual_text()
           end
         elseif match_type == "link" then
           local target, label = link_content:match("^(.-)|(.+)$")
+          target = target or link_content
+          label = label or link_content
           local display_text = label or target
           table.insert(virtual_text, { display_text, "NkmLinkInactive" })
         end
@@ -272,10 +273,22 @@ function M.go_to_link(direct_link)
     local target, _ = link_text:match("^(.-)|(.+)$")
     local file_path = vim.fn.expand(target)
 
+    if not target then
+      target = target or link_text
+      file_path = vim.fn.expand(M.config.root_path .. "/" .. target .. ".md")
+    end
+
     if vim.fn.filereadable(file_path) == 1 then
       vim.cmd("edit " .. file_path)
     else
-      print("File not found: " .. file_path)
+      -- Create and open the file
+      local fd = io.open(file_path, "w")
+      if fd then
+        fd:close()
+        vim.cmd("edit " .. file_path)
+      else
+        print("Failed to create file: " .. file_path)
+      end
     end
   end
 end
