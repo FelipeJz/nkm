@@ -48,7 +48,6 @@ local link_pattern = "%[%[(.-)%]%]"
 
 -- Setup highlight groups
 vim.api.nvim_set_hl(0, "NkmLinkInactive", { underline = true, fg = M.config.colors.underline })
-vim.api.nvim_set_hl(0, "NkmScript", { fg = M.config.colors.script })
 
 function M.update_virtual_text()
   local buffer = vim.api.nvim_get_current_buf()
@@ -120,46 +119,47 @@ function M.update_virtual_text()
           match_start, match_end, match_type = link_start, link_end, "link"
         end
 
+        local function format_tasks(tbl, text)
+          local created_marker   = text:match(DATE_MARKERS.created.match)
+          local done_marker      = text:match(DATE_MARKERS.done.match)
+          local scheduled_marker = text:match(DATE_MARKERS.scheduled.match)
+          local id_marker        = text:match(DATE_MARKERS.id.match)
 
-        local created_marker   = line_text:match(DATE_MARKERS.created.match)
-        local done_marker      = line_text:match(DATE_MARKERS.done.match)
-        local scheduled_marker = line_text:match(DATE_MARKERS.scheduled.match)
-        local id_marker        = line_text:match(DATE_MARKERS.id.match)
-
-
-        if not match_start then
-          local start_text = line_text
+          local start_text       = text
 
           -- Detect and highlight the task markers (@created, @done, @scheduled)
-          start_text = start_text
+          start_text             = start_text
               :gsub(DATE_MARKERS.created.strip, "")
               :gsub(DATE_MARKERS.done.strip, "")
               :gsub(DATE_MARKERS.scheduled.strip, "")
               :gsub(DATE_MARKERS.id.strip, "")
 
           -- Remove consecutive spaces left behind at the end of the line
-          start_text = start_text:gsub("%s+$", "")
+          start_text             = start_text:gsub("%s+$", "")
 
-          table.insert(virtual_text, { start_text:sub(current_col), "Normal" })
+          table.insert(tbl, { start_text:sub(current_col), "Normal" })
 
           if created_marker then
-            table.insert(virtual_text, { " 📅" .. created_marker, "TaskMarkerCreated" })
+            table.insert(tbl, { " 📅" .. created_marker, "TaskMarkerCreated" })
           end
 
           if done_marker then
-            table.insert(virtual_text, { " ✅" .. done_marker, "TaskMarkerDone" })
+            table.insert(tbl, { " ✅" .. done_marker, "TaskMarkerDone" })
           end
 
           if scheduled_marker then
-            table.insert(virtual_text, { " ⏳" .. scheduled_marker, "TaskMarkerScheduled" })
+            table.insert(tbl, { " ⏳" .. scheduled_marker, "TaskMarkerScheduled" })
           end
 
           if id_marker then
-            table.insert(virtual_text, { " @" .. id_marker, "TaskMarkerID" })
+            table.insert(tbl, { " @" .. id_marker, "TaskMarkerID" })
           end
-          break
         end
 
+        if not match_start then
+          format_tasks(virtual_text, line_text)
+          break
+        end
 
         if match_start > current_col then
           table.insert(virtual_text, { line_text:sub(current_col, match_start - 1), "Normal" })
@@ -170,6 +170,7 @@ function M.update_virtual_text()
           local _, decoded = pcall(vim.fn.json_decode, json_body)
           local result = M.run_script(decoded[1], decoded[2] or {})
 
+          -- Displays the first line of the script as a single overlay
           if #result > 0 then
             local display_text = result[1]
 
@@ -181,18 +182,23 @@ function M.update_virtual_text()
               display_text = display_text .. string.rep(" ", real_width - virtual_width)
             end
 
+            local display_table = {}
+            format_tasks(display_table, display_text)
+
             vim.api.nvim_buf_set_extmark(buffer, ns_id, line_number - 1, 0, {
-              virt_text = { { display_text, "NkmScript" } },
+              virt_text = display_table,
               virt_text_pos = "overlay",
               hl_mode = "combine",
             })
           end
 
+          -- Displays the rest of the script in virtual lines
           if #result > 1 then
-            -- Remaining lines: show virt_lines
             local virt_lines = {}
             for i = 2, #result do
-              table.insert(virt_lines, { { result[i], "NkmScript" } })
+              local display_table = {}
+              format_tasks(display_table, result[i])
+              table.insert(virt_lines, display_table)
             end
 
             vim.api.nvim_buf_set_extmark(buffer, ns_id, line_number - 1, 0, {

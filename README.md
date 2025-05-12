@@ -73,7 +73,6 @@ Using Lazy
 
 ## Todo list
 
-- [ ] Format for tasks on scripts
 - [ ] Finish schedule tasks and calendar
 - [ ] Fix script line wrap overflow
 - [ ] Fix diseapering lines
